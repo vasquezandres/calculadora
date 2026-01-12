@@ -222,3 +222,42 @@ if ("serviceWorker" in navigator) {
   });
 }
 
+let deferredPrompt = null;
+
+window.addEventListener("beforeinstallprompt", (e) => {
+  // Evita que Chrome lo muestre solo (y te deja controlarlo)
+  e.preventDefault();
+  deferredPrompt = e;
+
+  // Aquí tú decides cómo mostrar tu botón
+  const btn = document.getElementById("btnInstall");
+  if (btn) btn.style.display = "inline-flex";
+});
+
+window.addEventListener("appinstalled", () => {
+  deferredPrompt = null;
+  const btn = document.getElementById("btnInstall");
+  if (btn) btn.style.display = "none";
+});
+
+// Cuando el usuario pulse tu botón:
+async function installPWA() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  await deferredPrompt.userChoice;
+  deferredPrompt = null;
+}
+
+function isAppInstalled() {
+  return window.matchMedia("(display-mode: standalone)").matches
+    || window.navigator.standalone === true;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("btnInstall");
+  if (!btn) return;
+
+  if (isAppInstalled()) {
+    btn.style.display = "none";
+  }
+});

@@ -118,6 +118,14 @@ body{
   justify-content: space-between;
   gap: 10px;
 }
+
+.rate-sub1{
+  margin-top: 8px;
+  display:flex;
+  align-items:center;
+  justify-content: center;
+  gap: 10px;
+}
 .meta{ color: var(--muted2); font-size: 12px; }
 
 .card{
