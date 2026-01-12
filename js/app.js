@@ -212,13 +212,13 @@
   document.addEventListener("DOMContentLoaded", init);
 })();
 
+
 // Registro del Service Worker (PWA)
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("/js/sw.js")
-      .catch(() => {
-        // Silencioso: no afecta la app si falla
-      });
+      .register("/sw.js")
+      .catch(() => {});
   });
 }
+
