@@ -52,7 +52,7 @@ body{
 }
 
 .wrap{
-  max-width: 980px;
+  max-width: 780px;
   margin: 0 auto;
   padding: 28px 18px 40px;
 }
@@ -127,6 +127,8 @@ body{
   padding: 14px;
   backdrop-filter: blur(12px);
   box-shadow: var(--shadow);
+  width: 100%;
+  max-width: 100%;  
 }
 
 .tabs{
