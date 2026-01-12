@@ -261,3 +261,62 @@ document.addEventListener("DOMContentLoaded", () => {
     btn.style.display = "none";
   }
 });
+
+
+let deferredPrompt = null;
+
+/* Detectores */
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isStandalone =
+  window.matchMedia("(display-mode: standalone)").matches ||
+  window.navigator.standalone === true;
+
+/* DOM listo */
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("btnInstall");
+  if (!btn) return;
+
+  // Si ya está instalada, nunca mostrar el botón
+  if (isStandalone) {
+    btn.style.display = "none";
+    return;
+  }
+
+  // En iOS: mostrar botón con instrucciones
+  if (isIOS) {
+    btn.style.display = "inline-flex";
+    btn.addEventListener("click", () => {
+      alert(
+        "Para instalar:\n\n" +
+        "1. Abre este sitio en Safari\n" +
+        "2. Pulsa Compartir (⬆️)\n" +
+        "3. Toca «Agregar a pantalla de inicio»"
+      );
+    });
+  }
+});
+
+/* Android / Chrome / Desktop */
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+
+  const btn = document.getElementById("btnInstall");
+  if (btn && !isIOS) {
+    btn.style.display = "inline-flex";
+  }
+});
+
+window.addEventListener("appinstalled", () => {
+  deferredPrompt = null;
+  const btn = document.getElementById("btnInstall");
+  if (btn) btn.style.display = "none";
+});
+
+/* Acción instalar (Android/Desktop) */
+async function installPWA() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  await deferredPrompt.userChoice;
+  deferredPrompt = null;
+}
