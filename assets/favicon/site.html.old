@@ -1,0 +1,38 @@
+{
+  "name": "Calculadora de Remesas",
+  "short_name": "Remesas",
+  "description": "Calculadora rápida y personalizable para remesas",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0e1020",
+  "theme_color": "#2b2f77",
+
+  "icons": [
+    {
+      "src": "/assets/favicon/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/assets/favicon/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+
+  "screenshots": [
+    {
+      "src": "/assets/screenshots/mobile.png",
+      "sizes": "412x915",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/assets/screenshots/desktop.png",
+      "sizes": "1280x800",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ]
+}
