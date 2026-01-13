@@ -1,15 +1,10 @@
 // rate.js
-<<<<<<< HEAD
 (function () {
   // Si estás en localhost, pega al dominio real.
   // Si estás ya en remesas.solutechcloud.com, usa relativo.
   const API_BASE = (location.hostname === "localhost")
     ? "https://remesas.solutechcloud.com"
     : "";
-=======
-(function(){
-  const API_URL = "https://remesas.solutechcloud.com/api/dolar/oficial"; // BCV official USD->VES
->>>>>>> 178a752c8f340890d72d675480e35102d1c9370f
 
   const API = {
     oficial: `${API_BASE}/api/dolar/oficial`,
@@ -133,4 +128,3 @@
 
   window.Rate = { fetchExchangeRate, setRateUI };
 })();
-
