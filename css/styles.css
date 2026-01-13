@@ -15,7 +15,11 @@
 }
 
 *{ box-sizing:border-box; }
-html,body{ height:100%; }
+html,body{ 
+  height:100%; 
+  touch-action: manipulation; /* reduce double-tap zoom */
+  -webkit-text-size-adjust: 100%;
+}
 body{
   margin:0;
   font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
@@ -25,6 +29,8 @@ body{
               radial-gradient(900px 700px at 40% 90%, #0f3a3a 0%, transparent 55%),
               linear-gradient(180deg, var(--bg0), var(--bg1));
   overflow-x:hidden;
+  overscroll-behavior: none;
+  -webkit-user-select: none; 
 }
 
 .bg{ position:fixed; inset:0; pointer-events:none; }

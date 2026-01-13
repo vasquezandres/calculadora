@@ -360,3 +360,33 @@ window.installPWA = async function installPWA() {
   await deferredPrompt.userChoice;
   deferredPrompt = null;
 };
+
+
+// Bloquear pinch-to-zoom (mejor esfuerzo; iOS no siempre respeta al 100%)
+(function blockZoomGestures() {
+  // Bloquea gesto de zoom en iOS (gesturestart/gesturechange)
+  document.addEventListener("gesturestart", (e) => e.preventDefault(), { passive: false });
+  document.addEventListener("gesturechange", (e) => e.preventDefault(), { passive: false });
+  document.addEventListener("gestureend", (e) => e.preventDefault(), { passive: false });
+
+  // Bloquea zoom con Ctrl+scroll (desktop) y trackpad
+  window.addEventListener("wheel", (e) => {
+    if (e.ctrlKey) e.preventDefault();
+  }, { passive: false });
+
+  // Bloquea pinch (dos dedos) en navegadores que lo disparan como touchmove
+  let lastTouchEnd = 0;
+
+  document.addEventListener("touchmove", (e) => {
+    if (e.touches && e.touches.length > 1) {
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+  // Evita double-tap zoom (especialmente iOS Safari)
+  document.addEventListener("touchend", (e) => {
+    const now = Date.now();
+    if (now - lastTouchEnd <= 300) e.preventDefault();
+    lastTouchEnd = now;
+  }, { passive: false });
+})();
