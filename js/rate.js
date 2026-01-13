@@ -1,6 +1,6 @@
 // rate.js
 (function(){
-  const API_URL = "https://ve.dolarapi.com/v1/dolares/oficial"; // BCV official USD->VES
+  const API_URL = "https://remesas.solutechcloud.com/api/dolar/oficial"; // BCV official USD->VES
 
   function setRateUI({ exchangeRate, rateMode, lastRateUpdatedAt }){
     const rateEl = document.getElementById("bcvRate");
