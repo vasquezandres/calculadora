@@ -45,6 +45,7 @@
         <div class="rate-quick">
           <div class="seg">
             <button id="btnModeAuto" class="seg-btn active" type="button" title="Usar BCV (Auto)">BCV</button>
+            <button id="btnModeAlt" class="seg-btn" type="button" title="Usar tasa alternativa">Alterna</button>
             <button id="btnModeCustom" class="seg-btn" type="button" title="Usar tasa personalizada">Otra</button>
           </div>
 
@@ -143,16 +144,26 @@
             <div class="setting">
               <label for="rateMode">Modo de tasa</label>
               <select id="rateMode">
-                <option value="auto">Auto (BCV)</option>
-                <option value="manual">Manual</option>
+                <option value="auto">Auto</option>
+                <option value="manual">Otra (personalizada)</option>
               </select>
-              <p class="hint">Auto intenta traer tasa desde la API y la guarda local.</p>
+              <p class="hint">Auto trae la tasa desde la API. “Otra” usa la tasa que tú indiques.</p>
+            </div>
+
+            <!-- NUEVO: Fuente del modo Auto -->
+            <div class="setting">
+              <label for="rateSource">Fuente en Auto</label>
+              <select id="rateSource">
+                <option value="oficial">BCV</option>
+                <option value="alt">Alterna</option>
+              </select>
+              <p class="hint">Elige qué tasa usar cuando el modo está en Auto.</p>
             </div>
 
             <div class="setting">
-              <label for="manualRate">Tasa manual (Bs por USD)</label>
+              <label for="manualRate">Tasa personalizada (Bs por USD)</label>
               <input id="manualRate" type="number" inputmode="decimal" min="0" step="0.0001" placeholder="0.00">
-              <p class="hint">Solo aplica cuando el modo está en Manual.</p>
+              <p class="hint">Solo aplica cuando el modo está en “Otra (personalizada)”.</p>
             </div>
 
             <div class="setting setting-actions">
@@ -161,6 +172,7 @@
             </div>
           </div>
         </details>
+
       </section>
 
       <section id="dolar-a-bs" class="tab-content" role="tabpanel">

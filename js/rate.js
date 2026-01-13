@@ -1,66 +1,129 @@
 // rate.js
-(function(){
-  const API_URL = "https://ve.dolarapi.com/v1/dolares/oficial"; // BCV official USD->VES
+(function () {
+  // Si estás en localhost, pega al dominio real.
+  // Si estás ya en remesas.solutechcloud.com, usa relativo.
+  const API_BASE = (location.hostname === "localhost")
+    ? "https://remesas.solutechcloud.com"
+    : "";
 
-  function setRateUI({ exchangeRate, rateMode, lastRateUpdatedAt }){
-    const rateEl = document.getElementById("bcvRate");
-    const badge = document.getElementById("rateModeBadge");
-    const meta = document.getElementById("rateMeta");
+  const API = {
+    oficial: `${API_BASE}/api/dolar/oficial`,
+    alt: `${API_BASE}/api/dolar/alt`,
+  };
 
-    if (rateEl) rateEl.textContent = `Bs. ${Utils.formatNumber(exchangeRate)}`;
-    if (badge) badge.textContent = (rateMode === "manual") ? "MANUAL" : "AUTO";
+  const TTL_MS = 3 * 60 * 60 * 1000; // 3 horas (ajusta si quieres)
 
-    if (meta){
-      if (rateMode === "manual"){
-        meta.textContent = "Usando tasa personalizada guardada.";
-      } else {
-        meta.textContent = lastRateUpdatedAt ? `  ${formatPrettyDate(lastRateUpdatedAt)}` : "Sin actualización reciente (usando valor guardado).";
-      }
-    }
+  const inflight = { oficial: null, alt: null };
+
+  function nowMs(){ return Date.now(); }
+
+  function parseRate(data){
+    const rate = Number(data?.promedio ?? data?.venta ?? data?.compra);
+    if (!Number.isFinite(rate) || rate <= 0) throw new Error("Tasa inválida");
+    return rate;
   }
 
   function formatPrettyDate(iso){
     try{
       const d = new Date(iso);
       if (isNaN(d.getTime())) return iso;
-      return d.toLocaleString('es-PA', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+      return d.toLocaleString('es-PA', {
+        year:'numeric', month:'2-digit', day:'2-digit',
+        hour:'2-digit', minute:'2-digit'
+      });
     }catch{
       return iso;
     }
   }
 
-  async function fetchExchangeRate(force=false){
+  function setRateUI(s){
+    const rateEl = document.getElementById("bcvRate");
+    const badge = document.getElementById("rateModeBadge");
+    const meta = document.getElementById("rateMeta");
+
+    if (rateEl) rateEl.textContent = `Bs. ${Utils.formatNumber(s.exchangeRate || 0)}`;
+    if (badge) badge.textContent = (s.rateMode === "manual") ? "MANUAL" : "AUTO";
+
+    if (!meta) return;
+
+    if (s.rateMode === "manual"){
+      meta.textContent = "Otra • usando tasa personalizada.";
+      return;
+    }
+
+    const label = (s.rateSource === "alt") ? "Alterna" : "BCV";
+    meta.textContent = s.lastRateUpdatedAt
+      ? `${label} • ${formatPrettyDate(s.lastRateUpdatedAt)}`
+      : `${label} • Sin actualización reciente (usando valor guardado).`;
+  }
+
+  function isFresh(updatedIso){
+    if (!updatedIso) return false;
+    const t = new Date(updatedIso).getTime();
+    if (!Number.isFinite(t)) return false;
+    return (nowMs() - t) < TTL_MS;
+  }
+
+  async function fetchOne(source, force=false){
     const s = AppSettings.getSettings();
-    if (s.rateMode !== "auto"){
-      // In manual mode we don't fetch, just update UI
+
+    // si está en manual, no buscamos API
+    if (s.rateMode === "manual") {
       setRateUI(s);
-      return s.exchangeRate;
+      return s.exchangeRate || 0;
     }
 
-    // If we have a stored rate and not forcing, use it
-    if (!force && s.exchangeRate > 0){
-      setRateUI(s);
-      return s.exchangeRate;
+    const src = (source === "alt") ? "alt" : "oficial";
+
+    // si no forzamos y tenemos fresca, usamos guardada
+    if (!force) {
+      if (src === "alt" && s.rateAlt > 0 && isFresh(s.updatedAlt)) return s.rateAlt;
+      if (src === "oficial" && s.rateOficial > 0 && isFresh(s.updatedOficial)) return s.rateOficial;
     }
 
-    try{
-      const res = await fetch(API_URL, { cache: "no-store" });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      // DolarAPI returns {moneda, casa, nombre, compra, venta, fechaActualizacion, ...}
-      const rate = Number(data?.promedio ?? data?.venta ?? data?.compra);
-      if (!Number.isFinite(rate) || rate <= 0) throw new Error("Tasa inválida");
-      const updatedAt = data?.fechaActualizacion ? String(data.fechaActualizacion) : Utils.nowISO();
+    const url = API[src] + `?t=${nowMs()}`;
 
-      const next = AppSettings.setSettings({ exchangeRate: rate, lastRateUpdatedAt: updatedAt });
-      setRateUI(next);
-      return rate;
-    } catch (e){
-      // fallback to stored
-      const fallback = AppSettings.getSettings();
-      setRateUI(fallback);
-      return fallback.exchangeRate || 0;
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const data = await res.json();
+    const rate = parseRate(data);
+    const updatedAt = String(data?.fechaActualizacion || new Date().toISOString());
+
+    if (src === "alt") {
+      AppSettings.setSettings({ rateAlt: rate, updatedAlt: updatedAt });
+    } else {
+      AppSettings.setSettings({ rateOficial: rate, updatedOficial: updatedAt });
     }
+
+    return rate;
+  }
+
+  async function fetchExchangeRate(source="oficial", force=false){
+    const src = (source === "alt") ? "alt" : "oficial";
+
+    // single-flight por fuente
+    if (inflight[src]) return inflight[src];
+
+    inflight[src] = (async () => {
+      try {
+        const rate = await fetchOne(src, force);
+
+        // actualiza UI con lo que esté seleccionado actualmente
+        const s2 = AppSettings.getSettings();
+        setRateUI(s2);
+        return rate;
+      } catch (e) {
+        // fallback a lo guardado
+        const fallback = AppSettings.getSettings();
+        setRateUI(fallback);
+        return fallback.exchangeRate || 0;
+      } finally {
+        inflight[src] = null;
+      }
+    })();
+
+    return inflight[src];
   }
 
   window.Rate = { fetchExchangeRate, setRateUI };
